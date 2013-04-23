@@ -37,7 +37,7 @@
      * @param samples array [ [v11,...,v1N], ... [vn1,...,vnN] ]
      * @return Array
      */
-    clusterCenter: function(samples) {
+    clustercenter: function(samples) {
       var N = samples.length, dim = samples[0].length, dsum = [];
       if (N === 1) { // singleton cluster
         return samples[0];

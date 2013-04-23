@@ -203,7 +203,7 @@
       if (points.length === 0) {
         throw "Empty cluster " + j;
       }
-      this.centroids[j] = math.clusterCenter(points);
+      this.centroids[j] = math.clustercenter(points);
       energy = 0;
       for (var i = 0; i < points.length; i++) {
         energy += math.sqL2(points[i], this.centroids[j]);
