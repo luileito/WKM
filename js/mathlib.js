@@ -104,7 +104,7 @@
     msd: function(vec) {
       var m = this.avg(vec), s = 0, n = vec.length;
       if (n > 1) {
-        for (d = 0; d < n; d++) {
+        for (var d = 0; d < n; d++) {
           var dist = vec[d] - m;
           s += dist * dist;
         }
