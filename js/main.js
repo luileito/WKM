@@ -17,7 +17,7 @@ if (n_args < e_args) {
 
 var dfile = args[0]
   , num_k = args[1]
-  , delta = n_args > 2 ? args[3] : 0
+  , delta = n_args > 2 ? args[2] : 0
   ;
 
 if (dfile === "-") {

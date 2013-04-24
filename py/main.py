@@ -1,7 +1,8 @@
 import sys
 from wkmb import WKM
 
-n_args = len(sys.argv[1:])
+args = sys.argv[1:]
+n_args = len(args)
 e_args = 2
 
 if n_args < e_args:
@@ -12,9 +13,9 @@ if n_args < e_args:
   print "In this example, rows are data samples, columns are dimensions (separated by spaces)"
   sys.exit(1)
 
-dfile = sys.argv[1]
-num_k = sys.argv[2]
-delta = sys.argv[3] if n_args > 2 else 0.0
+dfile = args[0]
+num_k = args[1]
+delta = args[2] if n_args > 2 else 0.0
 
 # Read data samples
 data = sys.stdin.readlines() if (dfile == "-") else file(dfile)
