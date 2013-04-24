@@ -40,3 +40,38 @@ def clustercenter(samples):
     dsum[d] /= N
   return dsum
 
+def whiten(samples):
+  """
+  Divides each feature by its standard deviation across all observations, 
+  in order to give it unit variance.
+  @param samples array [ [v11,...,v1N], ... [vn1,...,vnN] ]
+  """
+  N, dim = len(samples), len(samples[0])
+  pts = samples[:]
+  for d in range(dim):
+    cols = [samples[i][d] for i in range(N)]
+    m, s = msd(cols);
+    if s > 0: 
+      for i in range(N):
+        pts[i][d] = samples[i][d] / s
+  return pts
+
+def avg(vec):
+  """
+  Computes the average of all vector values.
+  vec = [v1,...,vN]
+  """
+  return sum(vec) / len(vec)
+  
+def msd(vec):
+  """
+  Computes the mean plus standard deviation of a vector.
+  vec = [v1,...,vN]
+  """
+  mean, sd, n = avg(vec), 0.0, len(vec)
+  if n > 1:
+    for v in vec:
+      sd += (v - mean)**2
+    sd = math.sqrt(sd / (n-1))
+  return mean, sd
+  

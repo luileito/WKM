@@ -1,5 +1,6 @@
 import sys
 from wkmb import WKM
+from mathlib import whiten
 
 args = sys.argv[1:]
 n_args = len(args)
@@ -22,7 +23,7 @@ data = sys.stdin.readlines() if (dfile == "-") else file(dfile)
 # Do some cleanup and convert data to list
 dseq = [ map(float, line.strip().split()) for line in data if line.strip() ]
 
-w = WKM(dseq, num_k, delta)
+w = WKM(whiten(dseq), num_k, delta)
 w.cluster()
 
 print "boundaries:",    w.boundaries

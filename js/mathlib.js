@@ -51,6 +51,66 @@
         dsum[d] /= N;
       }
       return dsum;
+    },
+    
+    /**
+     * Divides each feature by its standard deviation across all observations, 
+     * in order to give it unit variance.
+     * @param samples Array [ [v11,...,v1N], ... [vn1,...,vnN] ]
+     * @return Array
+     */
+    whiten: function(samples) {
+      var N = samples.length, dim = samples[0].length, pts = samples.slice();
+      for (var d = 0; d < dim; d++) {
+        var i, col = [];
+        for (i = 0; i < N; i++) {
+          col.push(samples[i][d]);
+        }
+        var o = this.msd(col);
+        if (o.sd > 0) for (i = 0; i < N; ++i) {
+          pts[i][d] /= o.sd;
+        }
+      }
+      return pts;
+    },
+    
+    /**
+     * Computes the sum of all vector values.
+     * @paran vec Array [v1,...,vN]
+     * @return Number
+     */
+    sum: function(vec) {
+      var n = vec.length, sum = 0;
+      for (var d = 0; d < n; d++) {
+        sum += vec[d];
+      }
+      return sum;
+    },
+    
+    /**
+     * Computes the average of all vector values.
+     * @paran vec Array [v1,...,vN]
+     * @return Number
+     */
+    avg: function(vec) {
+      return this.sum(vec)/vec.length;
+    },
+    
+    /**
+     * Computes the mean plus standard deviation of a vectors.
+     * @paran vec Array [v1,...,vN]
+     * @return {{ mean: Number, sd: Number }}
+     */
+    msd: function(vec) {
+      var m = this.avg(vec), s = 0, n = vec.length;
+      if (n > 1) {
+        for (d = 0; d < n; d++) {
+          var dist = vec[d] - m;
+          s += dist * dist;
+        }
+        s = Math.sqrt(s / (n-1));
+      }
+      return { mean: m, sd: s };
     }
     
   };

@@ -1,6 +1,7 @@
 var util = require("util")
   , fs   = require("fs")
   , wkmb = require("./wkmb")
+  , math = require("./mathlib")
   , args   = process.argv.slice(2)
   , n_args = args.length
   , e_args = 2    
@@ -37,7 +38,7 @@ fs.readFileSync(dfile).toString().split("\n").forEach(function(line) {
   }
 });
 
-var w = new wkmb(dseq, num_k, delta);
+var w = new wkmb(math.whiten(dseq), num_k, delta);
 w.cluster();
 
 console.log("boundaries:",    w.boundaries );
