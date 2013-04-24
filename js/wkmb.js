@@ -8,7 +8,7 @@
    * See http://dx.doi.org/10.1016/j.ins.2013.02.042
    * @author Luis A. Leiva
    * @license Dual licensed under the MIT and LGPL licenses.
-   * @see Project page: personales.upv.es/luileito/wkm/
+   * @see Project page: http://personales.upv.es/luileito/wkm/
    */
   var WKM = function(samples, numclusters, threshold) {
     // Instantiates the class.
@@ -66,7 +66,7 @@
     this.reset();
     var N = this.samples.length, M = this.numclusters;
     // Silly checks
-    if (this.numclusters < 2) { // single partition
+    if (this.numclusters <= 1) { // single partition
       this.boundaries = [0];
       return;
     } else if (this.numclusters >= N) { // singleton clusters
@@ -79,9 +79,10 @@
     if (typeof method === 'undefined') {
       this.initdefault(N,M);
     } else {
-      if (method.toLowerCase() == "ts") {
+      var m = method.toLowerCase();
+      if (m == "ts") {
         this.TS(N,M);
-      } else if (method.lower() == "eq") {
+      } else if (m == "eq") {
         this.resample(N,M);
       } else {
         this.initdefault(N,M);
@@ -243,7 +244,7 @@
     // Silly check
     if (this.numclusters < 2) return;
     // Reallocate boundaries
-    var i,j,d,n,m,delta,J1,J2,pointsInCluster,sample,bestcluster,transfers;
+    var i,j,d,n,m,delta,J1,J2,points,sample,bestcluster,transfers;
     while (true) {
       transfers = false; // no transfers yet
       for (j = 0; j < this.numclusters; j++) {
@@ -306,7 +307,7 @@
       }
       // Update
       this.iterations++;
-      if (!transfers || this.iterations == this.maxIter) break;
+      if (!transfers || this.iterations == this.maxiter) break;
     }
     // Finally, recompute energies from scratch when algorithm converges, to avoid rounding errors
     this.computeEnergies();  

@@ -8,7 +8,7 @@ class WKM:
   See http://dx.doi.org/10.1016/j.ins.2013.02.042
   Implemented by Luis A. Leiva.
   Dual licensed under the MIT and GPL licenses.
-  Project page: personales.upv.es/luileito/wkm/
+  Project page: http://personales.upv.es/luileito/wkm/
   """
   
   def __init__(self, samples, numclusters, threshold=0.0):
@@ -54,7 +54,7 @@ class WKM:
     self.reset()
     N, M = len(self.samples), self.numclusters
     # Silly checks
-    if self.numclusters < 2: # single partition
+    if self.numclusters <= 1: # single partition
       self.boundaries = [0]
       return  
     elif self.numclusters >= N: # singleton clusters
@@ -64,9 +64,10 @@ class WKM:
     if method == None:
       self.initdefault(N,M)
     else:
-      if method.lower() == "ts":
+      m = method.lower() 
+      if m == "ts":
         self.TS(N,M)
-      elif method.lower() == "eq":
+      elif m == "eq":
         self.resample(N,M)
       else: 
         self.initdefault(N,M)
