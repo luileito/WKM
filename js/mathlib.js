@@ -4,13 +4,13 @@
   
     /**
      * Computes the cummulated distance along a sequence of vectors.
-     * @param samples array [ [v11,...,v1N], ... [vn1,...,vnN] ]
-     * @return {{ values: array, length: Number }}
+     * @param samples Array [ [v11,...,v1N], ... [vn1,...,vnN] ]
+     * @return {{ values: Array, length: Number }}
      */
     cumdist: function(samples) {
       var N = samples.length, l = [0], Ln = 0;
       for (var i = 1; i < N; i++) {
-        Li = Math.sqrt( this.sqL2(samples[i], samples[i-1]) );
+        var Li = Math.sqrt( this.sqL2(samples[i], samples[i-1]) );
         Ln += Li;
         l.push(Ln);
       }
@@ -19,14 +19,14 @@
 
     /**
      * Computes the L2 euclidean distance between two vectors.
-     * @param a array [a1,...,aN]
-     * @param a array [b1,...,bN]
+     * @param a Array [a1,...,aN]
+     * @param a Array [b1,...,bN]
      * @return Number
      */
-    sqL2: function(a,b) {    
+    sqL2: function(a, b) {
       var dim = a.length, nrg = 0;
       for (var d = 0; d < dim; d++) {
-        dist = a[d] - b[d];
+        var dist = a[d] - b[d];
         nrg += dist * dist;
       }
       return nrg;
@@ -34,7 +34,7 @@
 
     /**
      * Computes the geometric center of a set of vectors.
-     * @param samples array [ [v11,...,v1N], ... [vn1,...,vnN] ]
+     * @param samples Array [ [v11,...,v1N], ... [vn1,...,vnN] ]
      * @return Array
      */
     clustercenter: function(samples) {
@@ -52,7 +52,7 @@
       }
       return dsum;
     }
-
+    
   };
 
   module.exports = Mathlib;
