@@ -1,6 +1,8 @@
 (function(module, global) {
 
-  var math = require("./mathlib");
+  var math   = require("./mathlib")
+    , assert = require('assert')
+    ;
 
   /**
    * Warped K-Means: an algorithm to cluster sequentially-distributed data.
@@ -41,16 +43,10 @@
   WKM.prototype.reset = function() {
     this.initialized  = false;
     // System ouput
-    this.boundaries   = [];
-    this.clusters     = [];
-    this.centroids    = [];
-    this.localenergy  = [];
-    for (var j = 0; j < this.numclusters; j++) {
-      this.boundaries.push(0);
-      this.clusters.push(0);
-      this.centroids.push(0);
-      this.localenergy.push(0);
-    }
+    this.boundaries   = new Array(this.numclusters);
+    this.clusters     = new Array(this.numclusters);
+    this.centroids    = new Array(this.numclusters);
+    this.localenergy  = new Array(this.numclusters);
     this.totalenergy  = 0; // FIXME: actually it can be computed as array sum of localenergy
     this.iterations   = 0;
     this.numtransfers = 0;
@@ -157,9 +153,7 @@
   WKM.prototype.getPartition = function() {
     for (var j = 0; j < this.numclusters; j++) {
       this.clusters[j] = this.getClusterSamples(j);
-      if (this.clusters[j].length === 0) {
-        throw "Empty cluster " + j;
-      }
+      assert(this.clusters[j].length > 0, "Empty cluster " + j);
     }
   };
 
@@ -183,9 +177,7 @@
     this.clusters = [];
     for (var j = 0; j < partition.length; j++) {
       var points = partition[j];
-      if (points.length === 0) {
-        throw "Empty cluster " + j;
-      }
+      assert(points.length > 0, "Empty cluster " + j);
       this.clusters[j] = points.slice();
       if (j > 0) {
         this.boundaries.push(points.length - 1);
@@ -201,11 +193,9 @@
     this.totalenergy = 0;
     for (var j = 0; j < this.numclusters; j++) {
       var points = this.clusters[j];
-      if (points.length === 0) {
-        throw "Empty cluster " + j;
-      }
+      assert(points.length > 0, "Empty cluster " + j);
       this.centroids[j] = math.clustercenter(points);
-      energy = 0;
+      var energy = 0;
       for (var i = 0; i < points.length; i++) {
         energy += math.sqL2(points[i], this.centroids[j]);
       }
@@ -219,10 +209,7 @@
    * @return void
    */
   WKM.prototype.incrementalMeans = function(sample, j, bestcluster, n, m) {
-    var d, newj = [];
-    for (d = 0; d < this.dimensions; d++) {
-      newj.push(0);
-    }
+    var d, newj = new Array(this.dimensions);
     var newbest = newj.slice();
     for (d = 0; d < this.dimensions; d++) {
       newbest[d] = this.centroids[bestcluster][d] + (sample[d] - this.centroids[bestcluster][d]) / (m+1);
@@ -257,11 +244,12 @@
             sample = points[i];
             bestcluster = j - 1;
             m = this.clusters[bestcluster].length;
+            n = this.clusters[j].length;
             J1 = (m / (m + 1)) * math.sqL2(sample, this.centroids[bestcluster]);
             J2 = (n / (n - 1)) * math.sqL2(sample, this.centroids[j]);
             delta = J1 - J2;
             this.cost++;
-            if (delta < 0 && this.clusters[j].length > 1) {
+            if (delta < 0 && n > 1) {
               transfers = true;
               this.numtransfers++;
               this.boundaries[j]++;
@@ -285,11 +273,12 @@
             sample = points[i];
             bestcluster = j + 1;
             m = this.clusters[bestcluster].length;
+            n = this.clusters[j].length;
             J1 = (m / (m + 1)) * math.sqL2(sample, this.centroids[bestcluster]);
             J2 = (n / (n - 1)) * math.sqL2(sample, this.centroids[j]);
             delta = J1 - J2;
             this.cost++;
-            if (delta < 0 && this.clusters[j].length > 1) {
+            if (delta < 0 && n > 1) {
               transfers = true;
               this.numtransfers++;
               this.boundaries[bestcluster]--;

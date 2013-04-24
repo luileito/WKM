@@ -119,7 +119,7 @@ class WKM:
     """Assign points to a cluster in a sequential fashion."""
     for j in range(self.numclusters):
       self.clusters[j] = self.getClusterSamples(j)
-      assert len(self.clusters[j]) > 0
+      assert len(self.clusters[j]) > 0, "Empty cluster %d" % j
 
 
   def getClusterSamples(self, index):
@@ -132,7 +132,7 @@ class WKM:
     """Specify a sequential cluster configuration."""
     self.boundaries, self.clusters = [0], []
     for j, points in enumerate(partition):
-      assert len(points) > 0
+      assert len(points) > 0, "Empty cluster %d" % j
       self.clusters[j] = points
       if j > 0:
         self.boundaries.append(len(points)-1)
@@ -143,7 +143,7 @@ class WKM:
     self.totalenergy = 0.0
     for j in range(self.numclusters):
       points = self.clusters[j]
-      assert len(points) > 0
+      assert len(points) > 0, "Empty cluster %d" % j
       self.centroids[j] = clustercenter(points)
       energy = 0.0
       for pt in points:
@@ -151,6 +151,17 @@ class WKM:
       self.localenergy[j] = energy
       self.totalenergy += energy
 
+
+  def incrementalMeans(self, sample, j, bestcluster, n, m):
+    """Recompute cluster means as a result of reallocating a sample."""
+    newj = [0.0] * self.dimensions
+    newbest = newj[:]
+    for d in range(self.dimensions):
+      newbest[d] = self.centroids[bestcluster][d] + (sample[d] - self.centroids[bestcluster][d]) / (m+1.0)
+      newj[d] = self.centroids[j][d] - (sample[d] - self.centroids[j][d]) / (n-1.0)
+    self.centroids[bestcluster] = newbest
+    self.centroids[j] = newj
+    
 
   def cluster(self, partition=None):
     """Perform sequential clustering."""
@@ -177,11 +188,12 @@ class WKM:
             sample = points[i]
             bestcluster = j-1
             m = len(self.clusters[bestcluster])
+            n = len(self.clusters[j])
             J1 = (m / (m + 1.0)) * sqL2(sample, self.centroids[bestcluster])
             J2 = (n / (n - 1.0)) * sqL2(sample, self.centroids[j])
             delta = J1 - J2
             self.cost += 1
-            if delta < 0 and len(self.clusters[j]) > 1:
+            if delta < 0 and n > 1:
               transfers = True
               self.numtransfers += 1
               self.boundaries[j] += 1
@@ -203,11 +215,12 @@ class WKM:
             sample = points[i]
             bestcluster = j+1
             m = len(self.clusters[bestcluster])
+            n = len(self.clusters[j])
             J1 = (m / (m + 1.0)) * sqL2(sample, self.centroids[bestcluster])
             J2 = (n / (n - 1.0)) * sqL2(sample, self.centroids[j])
             delta = J1 - J2
             self.cost += 1
-            if delta < 0 and len(self.clusters[j]) > 1:
+            if delta < 0 and n > 1:
               transfers = True
               self.numtransfers += 1
               self.boundaries[bestcluster] -= 1
@@ -226,26 +239,3 @@ class WKM:
     # Finally, recompute energies from scratch when algorithm converges, to avoid rounding errors
     self.computeEnergies()
 
-
-  def incrementalMeans(self, sample, j, bestcluster, n, m):
-    """Recompute cluster means as a result of reallocating a sample."""
-    newj = [0.0] * self.dimensions
-    newbest = newj[:]
-    for d in range(self.dimensions):
-      newbest[d] = self.centroids[bestcluster][d] + (sample[d] - self.centroids[bestcluster][d]) / (m+1.0)
-      newj[d] = self.centroids[j][d] - (sample[d] - self.centroids[j][d]) / (n-1.0)
-    self.centroids[bestcluster] = newbest
-    self.centroids[j] = newj
-
-
-  def getIndices(self):
-    """Retrieve cluster indices."""
-    assert len(self.boundaries) > 0
-    ind = self.boundaries[:]
-    firstIndex = 0
-    lastIndex = len(self.samples) - 1
-    if ind[0] != firstIndex:
-      ind.insert(0, firstIndex)
-    if ind[-1] != lastIndex:
-      ind.append(lastIndex)
-    return ind
