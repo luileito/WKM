@@ -209,8 +209,7 @@
    * @return void
    */
   WKM.prototype.incrementalMeans = function(sample, j, b, n, m) {
-    var d, newj = [];
-    var newb = newj.slice();
+    var d, newj = [], newb = [];
     for (d = 0; d < this.dimensions; d++) {
       newb[d] = this.centroids[b][d] + (sample[d] - this.centroids[b][d]) / (m + 1);
       newj[d] = this.centroids[j][d] - (sample[d] - this.centroids[j][d]) / (n - 1);
