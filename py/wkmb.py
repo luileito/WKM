@@ -43,7 +43,7 @@ class WKM:
     self.clusters     = [0] * self.numclusters
     self.centroids    = [0] * self.numclusters
     self.localenergy  = [0] * self.numclusters
-    self.totalenergy  = 0.0 # FIXME: actually it can be computed as array sum of localenergy
+    self.totalenergy  = 0.0
     self.iterations   = 0
     self.numtransfers = 0
     self.cost         = 0
@@ -64,10 +64,10 @@ class WKM:
     if method == None:
       self.initdefault(N,M)
     else:
-      m = method.lower() 
-      if m == "ts":
+      method = method.lower()
+      if method == "ts":
         self.TS(N,M)
-      elif m == "eq":
+      elif method == "eq":
         self.resample(N,M)
       else: 
         self.initdefault(N,M)
@@ -119,7 +119,7 @@ class WKM:
     """Assign points to a cluster in a sequential fashion."""
     for j in range(self.numclusters):
       self.clusters[j] = self.getClusterSamples(j)
-      assert len(self.clusters[j]) > 0, "Empty cluster %d" % j
+      #assert len(self.clusters[j]) > 0, "Empty cluster %d" % j
 
 
   def getClusterSamples(self, index):
@@ -132,7 +132,7 @@ class WKM:
     """Specify a sequential cluster configuration."""
     self.boundaries, self.clusters = [0], []
     for j, points in enumerate(partition):
-      assert len(points) > 0, "Empty cluster %d" % j
+      #assert len(points) > 0, "Empty cluster %d" % j
       self.clusters[j] = points
       if j > 0:
         self.boundaries.append(len(points)-1)
@@ -143,7 +143,7 @@ class WKM:
     self.totalenergy = 0.0
     for j in range(self.numclusters):
       points = self.clusters[j]
-      assert len(points) > 0, "Empty cluster %d" % j
+      #assert len(points) > 0, "Empty cluster %d" % j
       self.centroids[j] = clustercenter(points)
       energy = 0.0
       for pt in points:
@@ -152,14 +152,14 @@ class WKM:
       self.totalenergy += energy
 
 
-  def incrementalMeans(self, sample, j, bestcluster, n, m):
-    """Recompute cluster means as a result of reallocating a sample."""
+  def incrementalMeans(self, sample, j, b, n, m):
+    """Recompute cluster means as a result of reallocating a sample to a better cluster."""
     newj = [0.0] * self.dimensions
-    newbest = newj[:]
+    newb = newj[:]
     for d in range(self.dimensions):
-      newbest[d] = self.centroids[bestcluster][d] + (sample[d] - self.centroids[bestcluster][d]) / (m+1.0)
-      newj[d] = self.centroids[j][d] - (sample[d] - self.centroids[j][d]) / (n-1.0)
-    self.centroids[bestcluster] = newbest
+      newb[d] = self.centroids[b][d] + (sample[d] - self.centroids[b][d]) / (m + 1.0)
+      newj[d] = self.centroids[j][d] - (sample[d] - self.centroids[j][d]) / (n - 1.0)
+    self.centroids[b] = newb
     self.centroids[j] = newj
     
 
@@ -179,61 +179,54 @@ class WKM:
     while True:
       transfers = False # no transfers yet
       for j in range(self.numclusters):
-        points = self.clusters[j]
-        n = len(points)
-        if n < 2: continue
-        # Otherwise explore 1st half
-        if j > 0: 
+        if j > 0:
+          c = self.clusters[j][:]
+          n = len(c)
+          # Reallocate backward 1st half
           for i in range(0, int(math.floor(n/2.0 * (1 - self.threshold))) + 1):
-            sample = points[i]
-            bestcluster = j-1
-            m = len(self.clusters[bestcluster])
+            p = c[i]
+            b = j - 1
+            m = len(self.clusters[b])
             n = len(self.clusters[j])
-            J1 = (m / (m + 1.0)) * sqL2(sample, self.centroids[bestcluster])
-            J2 = (n / (n - 1.0)) * sqL2(sample, self.centroids[j])
+            if n < 2: break
+            J1 = (m / (m + 1.0)) * sqL2(p, self.centroids[b])
+            J2 = (n / (n - 1.0)) * sqL2(p, self.centroids[j])
             delta = J1 - J2
             self.cost += 1
-            if delta < 0 and n > 1:
+            if delta < 0:
               transfers = True
               self.numtransfers += 1
               self.boundaries[j] += 1
-              # Recompute means incrementally
-              self.incrementalMeans(sample,j,bestcluster,n,m)
-              # Recompute local energies
-              self.localenergy[bestcluster] += J1
+              self.incrementalMeans(p,j,b,n,m)
+              self.localenergy[b] += J1
               self.localenergy[j] -= J2
-              # Overall energy simply decreases
               self.totalenergy += delta
               self.getPartition()
             else: break
-        points = self.clusters[j]
-        n = len(points)
-        if n < 2: continue
-        # Otherwise explore 2nd half
         if j + 1 < self.numclusters:
+          c = self.clusters[j][:] 
+          n = len(c)
+          # Reallocate forward 2nd half
           for i in range(n-1, int(math.floor(n/2.0 * (1 + self.threshold))) - 2, -1):
-            sample = points[i]
-            bestcluster = j+1
-            m = len(self.clusters[bestcluster])
+            p = c[i]
+            b = j + 1
+            m = len(self.clusters[b])
             n = len(self.clusters[j])
-            J1 = (m / (m + 1.0)) * sqL2(sample, self.centroids[bestcluster])
-            J2 = (n / (n - 1.0)) * sqL2(sample, self.centroids[j])
+            if n < 2: break
+            J1 = (m / (m + 1.0)) * sqL2(p, self.centroids[b])
+            J2 = (n / (n - 1.0)) * sqL2(p, self.centroids[j])
             delta = J1 - J2
             self.cost += 1
-            if delta < 0 and n > 1:
+            if delta < 0:
               transfers = True
               self.numtransfers += 1
-              self.boundaries[bestcluster] -= 1
-              # Recompute means incrementally
-              self.incrementalMeans(sample,j,bestcluster,n,m)
-              # Recompute local energies
-              self.localenergy[bestcluster] += J1
+              self.boundaries[b] -= 1
+              self.incrementalMeans(p,j,b,n,m)
+              self.localenergy[b] += J1
               self.localenergy[j] -= J2
-              # Overall energy simply decreases
               self.totalenergy += delta
               self.getPartition()
             else: break
-      # Update
       self.iterations += 1
       if not transfers or self.iterations == self.maxiter: break
     # Finally, recompute energies from scratch when algorithm converges, to avoid rounding errors

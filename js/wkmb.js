@@ -47,7 +47,7 @@
     this.clusters     = new Array(this.numclusters);
     this.centroids    = new Array(this.numclusters);
     this.localenergy  = new Array(this.numclusters);
-    this.totalenergy  = 0; // FIXME: actually it can be computed as array sum of localenergy
+    this.totalenergy  = 0;
     this.iterations   = 0;
     this.numtransfers = 0;
     this.cost         = 0;
@@ -75,10 +75,10 @@
     if (typeof method === 'undefined') {
       this.initdefault(N,M);
     } else {
-      var m = method.toLowerCase();
-      if (m == "ts") {
+      method = method.toLowerCase();
+      if (method == "ts") {
         this.TS(N,M);
-      } else if (m == "eq") {
+      } else if (method == "eq") {
         this.resample(N,M);
       } else {
         this.initdefault(N,M);
@@ -153,7 +153,7 @@
   WKM.prototype.getPartition = function() {
     for (var j = 0; j < this.numclusters; j++) {
       this.clusters[j] = this.getClusterSamples(j);
-      assert(this.clusters[j].length > 0, "Empty cluster " + j);
+      //assert(this.clusters[j].length > 0, "Empty cluster " + j);
     }
   };
 
@@ -177,7 +177,7 @@
     this.clusters = [];
     for (var j = 0; j < partition.length; j++) {
       var points = partition[j];
-      assert(points.length > 0, "Empty cluster " + j);
+      //assert(points.length > 0, "Empty cluster " + j);
       this.clusters[j] = points.slice();
       if (j > 0) {
         this.boundaries.push(points.length - 1);
@@ -193,7 +193,7 @@
     this.totalenergy = 0;
     for (var j = 0; j < this.numclusters; j++) {
       var points = this.clusters[j];
-      assert(points.length > 0, "Empty cluster " + j);
+      //assert(points.length > 0, "Empty cluster " + j);
       this.centroids[j] = math.clustercenter(points);
       var energy = 0;
       for (var i = 0; i < points.length; i++) {
@@ -205,17 +205,17 @@
   };
 
   /** 
-   * Recompute cluster means as a result of reallocating a sample.
+   * Recompute cluster means as a result of reallocating a sample to a better cluster.
    * @return void
    */
-  WKM.prototype.incrementalMeans = function(sample, j, bestcluster, n, m) {
+  WKM.prototype.incrementalMeans = function(sample, j, b, n, m) {
     var d, newj = new Array(this.dimensions);
-    var newbest = newj.slice();
+    var newb = newj.slice();
     for (d = 0; d < this.dimensions; d++) {
-      newbest[d] = this.centroids[bestcluster][d] + (sample[d] - this.centroids[bestcluster][d]) / (m+1);
-      newj[d] = this.centroids[j][d] - (sample[d] - this.centroids[j][d]) / (n-1);
+      newb[d] = this.centroids[b][d] + (sample[d] - this.centroids[b][d]) / (m + 1);
+      newj[d] = this.centroids[j][d] - (sample[d] - this.centroids[j][d]) / (n - 1);
     }
-    this.centroids[bestcluster] = newbest;
+    this.centroids[b] = newb;
     this.centroids[j] = newj;
   };
   
@@ -231,70 +231,63 @@
     // Silly check
     if (this.numclusters < 2) return;
     // Reallocate boundaries
-    var i,j,d,n,m,delta,J1,J2,points,sample,bestcluster,transfers;
+    var i, j, b, c, n, m, J1, J2, delta, p, transfers;
     while (true) {
       transfers = false; // no transfers yet
       for (j = 0; j < this.numclusters; j++) {
-        points = this.clusters[j];
-        n = points.length;
-        if (n < 2) continue;
-        // Otherwise explore 1st half
         if (j > 0) {
+          c = this.clusters[j].slice();
+          n = c.length;
+          // Reallocate backward 1st half
           for (i = 0; i <= Math.floor(n/2 * (1 - this.threshold)) + 1; i++) {
-            sample = points[i];
-            bestcluster = j - 1;
-            m = this.clusters[bestcluster].length;
+            p = c[i];
+            b = j - 1;
+            m = this.clusters[b].length;
             n = this.clusters[j].length;
-            J1 = (m / (m + 1)) * math.sqL2(sample, this.centroids[bestcluster]);
-            J2 = (n / (n - 1)) * math.sqL2(sample, this.centroids[j]);
+            if (n < 2) break;
+            J1 = (m / (m + 1)) * math.sqL2(p, this.centroids[b]);
+            J2 = (n / (n - 1)) * math.sqL2(p, this.centroids[j]);
             delta = J1 - J2;
             this.cost++;
-            if (delta < 0 && n > 1) {
+            if (delta < 0) {
               transfers = true;
               this.numtransfers++;
               this.boundaries[j]++;
-              // Recompute means incrementally
-              this.incrementalMeans(sample,j,bestcluster,n,m);
-              // Recompute local energies
-              this.localenergy[bestcluster] += J1;
+              this.incrementalMeans(p,j,b,n,m);
+              this.localenergy[b] += J1;
               this.localenergy[j] -= J2;
-              // Overall energy simply decreases
               this.totalenergy += delta;
               this.getPartition();
             } else break;
           }
         }
-        points = this.clusters[j];
-        n = points.length;
-        if (n < 2) continue;
-        // Otherwise explore 2nd half
         if (j + 1 < this.numclusters) {
+          c = this.clusters[j].slice();
+          n = c.length;
+          // Reallocate forward 2nd half
           for (i = n - 1; i >= Math.floor(n/2 * (1 + this.threshold)) - 2; i--) {
-            sample = points[i];
-            bestcluster = j + 1;
-            m = this.clusters[bestcluster].length;
+            p = c[i];
+            b = j + 1;
+            m = this.clusters[b].length;
             n = this.clusters[j].length;
-            J1 = (m / (m + 1)) * math.sqL2(sample, this.centroids[bestcluster]);
-            J2 = (n / (n - 1)) * math.sqL2(sample, this.centroids[j]);
+            if (n < 2) break;
+            J1 = (m / (m + 1)) * math.sqL2(p, this.centroids[b]);
+            J2 = (n / (n - 1)) * math.sqL2(p, this.centroids[j]);
             delta = J1 - J2;
             this.cost++;
-            if (delta < 0 && n > 1) {
+            if (delta < 0) {
               transfers = true;
               this.numtransfers++;
-              this.boundaries[bestcluster]--;
-              // Recompute means incrementally
-              this.incrementalMeans(sample,j,bestcluster,n,m);
-              // Recompute local energies
-              this.localenergy[bestcluster] += J1;
+              this.boundaries[b]--;
+              this.incrementalMeans(p,j,b,n,m);
+              this.localenergy[b] += J1;
               this.localenergy[j] -= J2;
-              // Overall energy simply decreases
               this.totalenergy += delta;
               this.getPartition();
             } else break;
           }
         }
       }
-      // Update
       this.iterations++;
       if (!transfers || this.iterations == this.maxiter) break;
     }

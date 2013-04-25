@@ -10,7 +10,7 @@ var util = require("util")
 if (n_args < e_args) {
   console.log("Usage Error: "+process.argv[0]+" file K [delta]");
   // Examples reading from stdin:
-  //   echo -e '1 2 3\\n2 3 4\\n6 5 6\\n' | node main.js - 2
+  //   echo -e '1 2 3\n2 3 4\n6 5 6\n' | node main.js - 2
   //   tail -n +2 ../sensor.csv | tr ',' ' ' | node main.js - 5
   console.log("In this example, rows are data samples, columns are dimensions (separated by spaces)");
   process.exit(1);
@@ -43,7 +43,7 @@ w.cluster();
 
 console.log("boundaries:",    w.boundaries );
 //console.log( "clusters:",      w.clusters);
-console.log("centroids:",     w.centroids);
+//console.log("centroids:",     w.centroids);
 console.log("localenergy:",   w.localenergy);
 console.log("totalenergy:",   w.totalenergy);
 console.log("iterations:",    w.iterations);
