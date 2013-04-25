@@ -43,10 +43,10 @@
   WKM.prototype.reset = function() {
     this.initialized  = false;
     // System ouput
-    this.boundaries   = new Array(this.numclusters);
-    this.clusters     = new Array(this.numclusters);
-    this.centroids    = new Array(this.numclusters);
-    this.localenergy  = new Array(this.numclusters);
+    this.boundaries   = [];
+    this.clusters     = [];
+    this.centroids    = [];
+    this.localenergy  = [];
     this.totalenergy  = 0;
     this.iterations   = 0;
     this.numtransfers = 0;
@@ -209,7 +209,7 @@
    * @return void
    */
   WKM.prototype.incrementalMeans = function(sample, j, b, n, m) {
-    var d, newj = new Array(this.dimensions);
+    var d, newj = [];
     var newb = newj.slice();
     for (d = 0; d < this.dimensions; d++) {
       newb[d] = this.centroids[b][d] + (sample[d] - this.centroids[b][d]) / (m + 1);
