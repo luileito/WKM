@@ -1,4 +1,4 @@
 WKM
 ===
 
-Warped K-Means
+Warped K-Means. See project page at http://personales.upv.es/luileito/wkm/
